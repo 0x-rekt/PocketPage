@@ -4,6 +4,7 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import {
   Animated,
@@ -210,7 +211,7 @@ function IncidentRow({ incident }: { incident: Incident }) {
         : "RESOLVED";
 
   return (
-    <Pressable style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}>
+    <Pressable accessibilityRole="button" accessibilityLabel={`Open incident: ${incident.title}`} onPress={() => router.push({ pathname: "/(app)/incident/[id]" as never, params: { id: incident.id } })} style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}>
       <View className="flex-row items-center justify-between py-3.5">
         <View className="mr-3 flex-1">
           <Text
@@ -336,10 +337,11 @@ export default function Home() {
           </Card>
         )}
 
-        <Pressable className="mt-3 items-end active:opacity-70">
+        <Pressable className="mt-3 flex-row items-center justify-end active:opacity-70" onPress={() => router.push("/(app)/incidents")}>
           <Text className="text-sm font-semibold text-accent-primary">
-            View all →
+            View all
           </Text>
+          <Ionicons name="arrow-forward" size={15} color="#5B6EF5" style={{ marginLeft: 5 }} />
         </Pressable>
 
         {/* Team Status */}

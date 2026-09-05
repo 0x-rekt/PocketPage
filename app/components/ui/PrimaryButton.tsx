@@ -38,7 +38,8 @@ export function PrimaryButton({
 
   return (
     <Pressable
-      className={`h-14 flex-row items-center justify-center rounded-[28px] ${containerClass} ${isDisabled ? "opacity-60" : ""} ${className ?? ""}`}
+      className={`h-[54px] flex-row items-center justify-center rounded-[27px] ${containerClass} ${isDisabled ? "opacity-60" : ""} ${className ?? ""}`}
+      style={({ pressed }) => ({ opacity: isDisabled ? 0.6 : pressed ? 0.78 : 1 })}
       disabled={isDisabled}
       {...props}
     >

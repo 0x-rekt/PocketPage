@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Pressable,
@@ -117,7 +118,7 @@ function IncidentRow({ incident }: { incident: Incident }) {
         : "RESOLVED";
 
   return (
-    <Pressable className="active:opacity-70">
+    <Pressable accessibilityRole="button" accessibilityLabel={`Open incident: ${incident.title}`} onPress={() => router.push({ pathname: "/(app)/incident/[id]" as never, params: { id: incident.id } })} className="active:opacity-70">
       <View className="flex-row items-center justify-between py-4">
         <View className="mr-3 flex-1">
           <Text

@@ -218,7 +218,7 @@ export default function Profile() {
         </Card>
 
         <Text className="mt-8 text-center text-xs text-status-muted">
-          PocketPage v1.0.0
+          PocketPage · v1.0.0
         </Text>
       </ScrollView>
     </SafeAreaView>
