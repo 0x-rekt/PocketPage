@@ -19,7 +19,8 @@
     "@prisma/orm-postgres": "^8.0.0-rc.8",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "svix": "^2.3.0"
   },
   "scripts": {
     "contract:emit": "prisma contract emit"

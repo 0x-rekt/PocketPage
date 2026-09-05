@@ -1,21 +1,24 @@
-import express, { type Request, type Response } from "express"
-import dotenv from "dotenv"
-import cors from "cors"
+import express, { type Request, type Response } from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import webhooks from "./routes/webhooks";
 
-dotenv.config()
+dotenv.config();
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 
-const app = express()
+const app = express();
 
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(cors({origin:["*"]}))
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({ origin: ["*"] }));
+
+app.use("/api/webhooks", webhooks);
 
 app.get("/", (req: Request, res: Response) => {
-    res.send("Hello World!")
-})
+  res.send("Hello World!");
+});
 
 app.listen(PORT, () => {
-    console.log(`Server started on port http://localhost:${PORT}`)
-})
+  console.log(`Server started on port http://localhost:${PORT}`);
+});
