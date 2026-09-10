@@ -13,3 +13,84 @@ model User {
     
     @@index([clerkId])
 }
+
+model Team {
+    id String @id @default(cuid(2))
+    name String
+
+    createdAt DateTime @default(now())
+    updatedAt temporal.updatedAt()
+
+    members TeamMember[]
+    rotations Rotation[]
+    incidents Incident[]
+}
+
+model TeamMember {
+    id String @id @default(cuid(2))
+    teamId String
+    userId String
+    role String @default("member")
+
+    createdAt DateTime @default(now())
+
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([teamId, userId])
+    @@index([userId])
+}
+
+model Rotation {
+    id String @id @default(cuid(2))
+    teamId String
+    name String
+    cadence String @default("weekly")
+    startDate DateTime
+    active Boolean @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt temporal.updatedAt()
+
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+    members RotationMember[]
+
+    @@index([teamId, active])
+}
+
+model RotationMember {
+    id String @id @default(cuid(2))
+    rotationId String
+    userId String
+    position Int
+
+    rotation Rotation @relation(fields: [rotationId], references: [id], onDelete: Cascade)
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([rotationId, userId])
+    @@unique([rotationId, position])
+    @@index([userId])
+}
+
+model Incident {
+    id String @id @default(cuid(2))
+    teamId String
+    source String
+    sourceEventId String?
+    title String
+    payload Json
+    severity String @default("critical")
+    status String @default("open")
+    ackedById String?
+    ackedAt DateTime?
+    resolvedById String?
+    resolvedAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt temporal.updatedAt()
+
+    team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+    @@index([teamId, status, createdAt])
+    @@index([source, sourceEventId])
+}

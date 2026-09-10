@@ -1,0 +1,926 @@
+[
+  {
+    "id": "table.incident",
+    "label": "Create table \"incident\"",
+    "summary": "Creates table \"incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"incident\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"incident\"",
+        "sql": "CREATE TABLE \"public\".\"incident\" (\n  \"ackedAt\" timestamptz,\n  \"ackedById\" text,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"payload\" json NOT NULL,\n  \"resolvedAt\" timestamptz,\n  \"resolvedById\" text,\n  \"severity\" text DEFAULT 'critical' NOT NULL,\n  \"source\" text NOT NULL,\n  \"sourceEventId\" text,\n  \"status\" text DEFAULT 'open' NOT NULL,\n  \"teamId\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"incident\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.rotation",
+    "label": "Create table \"rotation\"",
+    "summary": "Creates table \"rotation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "rotation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"rotation\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotation\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"rotation\"",
+        "sql": "CREATE TABLE \"public\".\"rotation\" (\n  \"active\" bool DEFAULT true NOT NULL,\n  \"cadence\" text DEFAULT 'weekly' NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"startDate\" timestamptz NOT NULL,\n  \"teamId\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"rotation\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotation\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.rotationMember",
+    "label": "Create table \"rotationMember\"",
+    "summary": "Creates table \"rotationMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"rotationMember\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"rotationMember\"",
+        "sql": "CREATE TABLE \"public\".\"rotationMember\" (\n  \"id\" text NOT NULL,\n  \"position\" int4 NOT NULL,\n  \"rotationId\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"rotationMember\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.team",
+    "label": "Create table \"team\"",
+    "summary": "Creates table \"team\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "team"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"team\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"team\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"team\"",
+        "sql": "CREATE TABLE \"public\".\"team\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"team\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"team\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.teamMember",
+    "label": "Create table \"teamMember\"",
+    "summary": "Creates table \"teamMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "teamMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"teamMember\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"teamMember\"",
+        "sql": "CREATE TABLE \"public\".\"teamMember\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" text NOT NULL,\n  \"role\" text DEFAULT 'member' NOT NULL,\n  \"teamId\" text NOT NULL,\n  \"userId\" text NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"teamMember\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.rotationMember.rotationMember_rotationId_userId_key",
+    "label": "Add unique constraint on \"rotationMember\" (rotationId, userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "rotationMember_rotationId_userId_key",
+        "table": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"rotationMember_rotationId_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_rotationId_userId_key",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"rotationMember_rotationId_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"rotationMember\" ADD CONSTRAINT \"rotationMember_rotationId_userId_key\" UNIQUE (\"rotationId\", \"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"rotationMember_rotationId_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_rotationId_userId_key",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.rotationMember.rotationMember_rotationId_position_key",
+    "label": "Add unique constraint on \"rotationMember\" (rotationId, position)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "rotationMember_rotationId_position_key",
+        "table": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"rotationMember_rotationId_position_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_rotationId_position_key",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"rotationMember_rotationId_position_key\"",
+        "sql": "ALTER TABLE \"public\".\"rotationMember\" ADD CONSTRAINT \"rotationMember_rotationId_position_key\" UNIQUE (\"rotationId\", \"position\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"rotationMember_rotationId_position_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_rotationId_position_key",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.teamMember.teamMember_teamId_userId_key",
+    "label": "Add unique constraint on \"teamMember\" (teamId, userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "teamMember_teamId_userId_key",
+        "table": "teamMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"teamMember_teamId_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "teamMember_teamId_userId_key",
+          "public",
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"teamMember_teamId_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"teamMember\" ADD CONSTRAINT \"teamMember_teamId_userId_key\" UNIQUE (\"teamId\", \"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"teamMember_teamId_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "teamMember_teamId_userId_key",
+          "public",
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incident.incident_source_sourceEventId_idx_33544158",
+    "label": "Create index \"incident_source_sourceEventId_idx_33544158\" on \"incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incident_source_sourceEventId_idx_33544158",
+        "table": "incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incident_source_sourceEventId_idx_33544158\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_source_sourceEventId_idx_33544158\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incident_source_sourceEventId_idx_33544158\"",
+        "sql": "CREATE INDEX \"incident_source_sourceEventId_idx_33544158\" ON \"public\".\"incident\" (\"source\", \"sourceEventId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incident_source_sourceEventId_idx_33544158\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_source_sourceEventId_idx_33544158\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incident.incident_teamId_idx_f2b72ab3",
+    "label": "Create index \"incident_teamId_idx_f2b72ab3\" on \"incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incident_teamId_idx_f2b72ab3",
+        "table": "incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incident_teamId_idx_f2b72ab3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_teamId_idx_f2b72ab3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incident_teamId_idx_f2b72ab3\"",
+        "sql": "CREATE INDEX \"incident_teamId_idx_f2b72ab3\" ON \"public\".\"incident\" (\"teamId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incident_teamId_idx_f2b72ab3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_teamId_idx_f2b72ab3\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.incident.incident_teamId_status_createdAt_idx_63cb5c4f",
+    "label": "Create index \"incident_teamId_status_createdAt_idx_63cb5c4f\" on \"incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "incident_teamId_status_createdAt_idx_63cb5c4f",
+        "table": "incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"incident_teamId_status_createdAt_idx_63cb5c4f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_teamId_status_createdAt_idx_63cb5c4f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"incident_teamId_status_createdAt_idx_63cb5c4f\"",
+        "sql": "CREATE INDEX \"incident_teamId_status_createdAt_idx_63cb5c4f\" ON \"public\".\"incident\" (\"teamId\", \"status\", \"createdAt\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"incident_teamId_status_createdAt_idx_63cb5c4f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"incident_teamId_status_createdAt_idx_63cb5c4f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.rotation.rotation_teamId_active_idx_641a15a8",
+    "label": "Create index \"rotation_teamId_active_idx_641a15a8\" on \"rotation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "rotation_teamId_active_idx_641a15a8",
+        "table": "rotation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"rotation_teamId_active_idx_641a15a8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotation_teamId_active_idx_641a15a8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"rotation_teamId_active_idx_641a15a8\"",
+        "sql": "CREATE INDEX \"rotation_teamId_active_idx_641a15a8\" ON \"public\".\"rotation\" (\"teamId\", \"active\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"rotation_teamId_active_idx_641a15a8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotation_teamId_active_idx_641a15a8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.rotation.rotation_teamId_idx_f2b72ab3",
+    "label": "Create index \"rotation_teamId_idx_f2b72ab3\" on \"rotation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "rotation_teamId_idx_f2b72ab3",
+        "table": "rotation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"rotation_teamId_idx_f2b72ab3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotation_teamId_idx_f2b72ab3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"rotation_teamId_idx_f2b72ab3\"",
+        "sql": "CREATE INDEX \"rotation_teamId_idx_f2b72ab3\" ON \"public\".\"rotation\" (\"teamId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"rotation_teamId_idx_f2b72ab3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotation_teamId_idx_f2b72ab3\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.rotationMember.rotationMember_rotationId_idx_de5b73e5",
+    "label": "Create index \"rotationMember_rotationId_idx_de5b73e5\" on \"rotationMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "rotationMember_rotationId_idx_de5b73e5",
+        "table": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"rotationMember_rotationId_idx_de5b73e5\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotationMember_rotationId_idx_de5b73e5\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"rotationMember_rotationId_idx_de5b73e5\"",
+        "sql": "CREATE INDEX \"rotationMember_rotationId_idx_de5b73e5\" ON \"public\".\"rotationMember\" (\"rotationId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"rotationMember_rotationId_idx_de5b73e5\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotationMember_rotationId_idx_de5b73e5\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.rotationMember.rotationMember_userId_idx_a489d58a",
+    "label": "Create index \"rotationMember_userId_idx_a489d58a\" on \"rotationMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "rotationMember_userId_idx_a489d58a",
+        "table": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"rotationMember_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotationMember_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"rotationMember_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"rotationMember_userId_idx_a489d58a\" ON \"public\".\"rotationMember\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"rotationMember_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"rotationMember_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.teamMember.teamMember_teamId_idx_f2b72ab3",
+    "label": "Create index \"teamMember_teamId_idx_f2b72ab3\" on \"teamMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "teamMember_teamId_idx_f2b72ab3",
+        "table": "teamMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"teamMember_teamId_idx_f2b72ab3\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"teamMember_teamId_idx_f2b72ab3\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"teamMember_teamId_idx_f2b72ab3\"",
+        "sql": "CREATE INDEX \"teamMember_teamId_idx_f2b72ab3\" ON \"public\".\"teamMember\" (\"teamId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"teamMember_teamId_idx_f2b72ab3\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"teamMember_teamId_idx_f2b72ab3\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.teamMember.teamMember_userId_idx_a489d58a",
+    "label": "Create index \"teamMember_userId_idx_a489d58a\" on \"teamMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "teamMember_userId_idx_a489d58a",
+        "table": "teamMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"teamMember_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"teamMember_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"teamMember_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"teamMember_userId_idx_a489d58a\" ON \"public\".\"teamMember\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"teamMember_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"teamMember_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.incident.incident_teamId_fkey",
+    "label": "Add foreign key \"incident_teamId_fkey\" on \"incident\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "incident_teamId_fkey",
+        "table": "incident"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"incident_teamId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incident_teamId_fkey",
+          "public",
+          "\"public\".\"incident\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"incident_teamId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"incident\"\nADD CONSTRAINT \"incident_teamId_fkey\"\nFOREIGN KEY (\"teamId\")\nREFERENCES \"public\".\"team\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"incident_teamId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "incident_teamId_fkey",
+          "public",
+          "\"public\".\"incident\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.rotation.rotation_teamId_fkey",
+    "label": "Add foreign key \"rotation_teamId_fkey\" on \"rotation\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "rotation_teamId_fkey",
+        "table": "rotation"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"rotation_teamId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotation_teamId_fkey",
+          "public",
+          "\"public\".\"rotation\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"rotation_teamId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"rotation\"\nADD CONSTRAINT \"rotation_teamId_fkey\"\nFOREIGN KEY (\"teamId\")\nREFERENCES \"public\".\"team\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"rotation_teamId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotation_teamId_fkey",
+          "public",
+          "\"public\".\"rotation\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.rotationMember.rotationMember_rotationId_fkey",
+    "label": "Add foreign key \"rotationMember_rotationId_fkey\" on \"rotationMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "rotationMember_rotationId_fkey",
+        "table": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"rotationMember_rotationId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_rotationId_fkey",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"rotationMember_rotationId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"rotationMember\"\nADD CONSTRAINT \"rotationMember_rotationId_fkey\"\nFOREIGN KEY (\"rotationId\")\nREFERENCES \"public\".\"rotation\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"rotationMember_rotationId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_rotationId_fkey",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.rotationMember.rotationMember_userId_fkey",
+    "label": "Add foreign key \"rotationMember_userId_fkey\" on \"rotationMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "rotationMember_userId_fkey",
+        "table": "rotationMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"rotationMember_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_userId_fkey",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"rotationMember_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"rotationMember\"\nADD CONSTRAINT \"rotationMember_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"rotationMember_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "rotationMember_userId_fkey",
+          "public",
+          "\"public\".\"rotationMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.teamMember.teamMember_teamId_fkey",
+    "label": "Add foreign key \"teamMember_teamId_fkey\" on \"teamMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "teamMember_teamId_fkey",
+        "table": "teamMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"teamMember_teamId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "teamMember_teamId_fkey",
+          "public",
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"teamMember_teamId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"teamMember\"\nADD CONSTRAINT \"teamMember_teamId_fkey\"\nFOREIGN KEY (\"teamId\")\nREFERENCES \"public\".\"team\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"teamMember_teamId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "teamMember_teamId_fkey",
+          "public",
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.teamMember.teamMember_userId_fkey",
+    "label": "Add foreign key \"teamMember_userId_fkey\" on \"teamMember\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "teamMember_userId_fkey",
+        "table": "teamMember"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"teamMember_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "teamMember_userId_fkey",
+          "public",
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"teamMember_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"teamMember\"\nADD CONSTRAINT \"teamMember_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")\nON DELETE CASCADE"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"teamMember_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "teamMember_userId_fkey",
+          "public",
+          "\"public\".\"teamMember\""
+        ]
+      }
+    ]
+  }
+]
