@@ -9,11 +9,12 @@ const PORT = process.env.PORT || 3000;
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 app.use(cors({ origin: ["*"] }));
 
-app.use("/api/webhooks", webhooks);
+app.use("/api/webhooks", express.raw({ type: "application/json" }), webhooks);
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");

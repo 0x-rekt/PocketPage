@@ -3,62 +3,69 @@ import { getDb } from "../db/db";
 import { Webhook } from "svix";
 
 export const syncUser = async (req: Request, res: Response) => {
-  const db = await getDb();
-
-  const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET!;
-
-  if (!WEBHOOK_SECRET) throw new Error("CLERK_WEBHOOK_SECRET is not defined");
-
-  const svix_id = req.headers["svix-id"] as string | undefined;
-  const svix_timestamp = req.headers["svix-timestamp"] as string | undefined;
-  const svix_signature = req.headers["svix-signature"] as string | undefined;
-
-  if (!svix_id || !svix_timestamp || !svix_signature)
-    throw new Error("Invalid webhook headers");
-
-  const payload = req.body;
-
-  const wh = new Webhook(WEBHOOK_SECRET);
-
   let evt: any;
+
   try {
-    evt = wh.verify(JSON.stringify(payload), {
-      svixId: svix_id,
-      svixTimestamp: svix_timestamp,
-      svixSignature: svix_signature,
+    const webhookSecret = process.env.CLERK_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      console.error("CLERK_WEBHOOK_SECRET is not defined");
+      return res.status(500).json({ error: "Webhook is not configured" });
+    }
+
+    const svixId = req.get("svix-id");
+    const svixTimestamp = req.get("svix-timestamp");
+    const svixSignature = req.get("svix-signature");
+
+    if (!svixId || !svixTimestamp || !svixSignature) {
+      console.error("Clerk webhook headers are missing");
+      return res.status(400).json({ error: "Invalid webhook headers" });
+    }
+
+    if (!Buffer.isBuffer(req.body)) {
+      console.error("Clerk webhook body was not received as raw bytes");
+      return res.status(400).json({ error: "Invalid webhook body" });
+    }
+
+    const wh = new Webhook(webhookSecret);
+    wh.verify(req.body, {
+      "svix-id": svixId,
+      "svix-timestamp": svixTimestamp,
+      "svix-signature": svixSignature,
     });
+
+    evt = JSON.parse(req.body.toString("utf8"));
   } catch (error) {
-    return res.status(400).json({ error: "Invalid webhook signature" });
+    console.error("Clerk webhook verification failed:", error);
+    return res.status(400).json({ error: "Invalid Clerk webhook" });
   }
 
-  const eventType = evt.type;
-
-  if (eventType === "user.created") {
-    try {
+  try {
+    const db = await getDb();
+    if (evt.type === "user.created") {
       await db.orm.public.User.create({
         clerkId: evt.data.id,
-        email: evt.data.email_addresses[0].email_address,
-        name: evt.data.first_name,
+        email: evt.data.email_addresses[0]?.email_address ?? "",
+        name:
+          [evt.data.first_name, evt.data.last_name].filter(Boolean).join(" ") ||
+          "Unknown user",
         profileImg: evt.data.image_url,
       });
-      return res.status(200).json({ success: true });
-    } catch (error) {
-      return res.status(500).json({ error: "Internal server error" });
     }
-  }
 
-  if (eventType === "user.updated") {
-    try {
+    if (evt.type === "user.updated") {
       await db.orm.public.User.where({ clerkId: evt.data.id }).update({
-        email: evt.data.email_addresses[0].email_address,
-        name: evt.data.first_name,
+        email: evt.data.email_addresses[0]?.email_address ?? "",
+        name:
+          [evt.data.first_name, evt.data.last_name].filter(Boolean).join(" ") ||
+          "Unknown user",
         profileImg: evt.data.image_url,
       });
-      return res.status(200).json({ success: true });
-    } catch (error) {
-      return res.status(500).json({ error: "Internal server error" });
     }
-  }
 
-  return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Clerk webhook processing failed:", error);
+    return res.status(500).json({ error: "Webhook processing failed" });
+  }
 };
