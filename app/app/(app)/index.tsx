@@ -2,355 +2,98 @@ import { Card } from "@/components/ui/Card";
 import { PrimaryButton } from "@/components/ui/PrimaryButton";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import { useUser } from "@clerk/expo";
+import { apiGet, type DashboardData, type DashboardIncident } from "@/lib/api";
+import { useAuth, useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  Easing,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from "react-native";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Animated, Easing, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-// ─── Mock data ────────────────────────────────────────────────────────────────
-
-type IncidentSeverity = "critical" | "warning" | "success" | "muted";
-
-interface Incident {
-  id: string;
-  title: string;
-  source: string;
-  severity: IncidentSeverity;
-  status: "open" | "acked" | "resolved";
-  time: string;
-}
-
-const RECENT_INCIDENTS: Incident[] = [
-  {
-    id: "1",
-    title: "High error rate on /api/checkout",
-    source: "Sentry",
-    severity: "critical",
-    status: "open",
-    time: "2m ago",
-  },
-  {
-    id: "2",
-    title: "Uptime check failed — prod DB",
-    source: "UptimeRobot",
-    severity: "warning",
-    status: "acked",
-    time: "18m ago",
-  },
-  {
-    id: "3",
-    title: "Deployment #482 completed",
-    source: "GitHub Actions",
-    severity: "success",
-    status: "resolved",
-    time: "1h ago",
-  },
-];
-
-const TEAM_ROTATION = [
-  { name: "Alex K.", shift: "Next up · Thu", avatar: "A" },
-  { name: "Priya M.", shift: "Fri – Mon", avatar: "P" },
-];
-
-// ─── On-call state ────────────────────────────────────────────────────────────
-
-type OnCallState = "oncall" | "offcall" | "incident";
-
-// Change to "oncall" or "offcall" to preview other states.
-const DEMO_STATE: OnCallState = "incident";
-
-function getStatusLabel(state: OnCallState) {
-  if (state === "incident") return "1 ACTIVE\nINCIDENT";
-  if (state === "oncall") return "ON CALL";
-  return "ALL CLEAR";
-}
-
-function getStatusColor(state: OnCallState): string {
-  if (state === "incident") return "#F5484B";
-  if (state === "oncall") return "#5B6EF5";
-  return "#3DD68C";
-}
-
-function getStatusSubtext(state: OnCallState) {
-  if (state === "incident") return "Ack required · escalates in 8 min";
-  if (state === "oncall") return "You're on call until Fri 09:00";
-  return "No active incidents right now";
-}
-
-// ─── Pulsing border animation ─────────────────────────────────────────────────
-
-function usePulseAnim(active: boolean) {
-  const pulse = useRef(new Animated.Value(0.25)).current;
-
+function usePulse(active: boolean) {
+  const value = useRef(new Animated.Value(0.25)).current;
   useEffect(() => {
-    if (!active) {
-      pulse.setValue(0.25);
-      return;
-    }
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, {
-          toValue: 1,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulse, {
-          toValue: 0.25,
-          duration: 1800,
-          easing: Easing.inOut(Easing.sin),
-          useNativeDriver: true,
-        }),
-      ]),
-    );
+    if (!active) { value.setValue(0.25); return; }
+    const loop = Animated.loop(Animated.sequence([
+      Animated.timing(value, { toValue: 1, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(value, { toValue: 0.25, duration: 1800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ]));
     loop.start();
     return () => loop.stop();
-  }, [active, pulse]);
-
-  return pulse;
+  }, [active, value]);
+  return value;
 }
 
-// ─── On-Call Status Card ──────────────────────────────────────────────────────
+function IncidentRow({ incident }: { incident: DashboardIncident }) {
+  return (
+    <Pressable onPress={() => router.push({ pathname: "/(app)/incident/[id]" as never, params: { id: incident.id } })} className="active:opacity-70">
+      <View className="flex-row items-center justify-between py-3.5">
+        <View className="mr-3 flex-1">
+          <Text className="text-[15px] font-semibold text-text-primary" numberOfLines={1}>{incident.title}</Text>
+          <Text className="mt-1 text-xs text-text-secondary">{incident.source} · {new Date(incident.createdAt).toLocaleString()}</Text>
+        </View>
+        <StatusBadge severity={incident.severity} label={incident.status.toUpperCase()} />
+      </View>
+    </Pressable>
+  );
+}
 
-function OnCallStatusCard({ state }: { state: OnCallState }) {
-  const pulse = usePulseAnim(state === "incident");
-  const color = getStatusColor(state);
-  const openCount = state === "incident" ? "1" : "0";
+function StatusCard({ data }: { data: DashboardData }) {
+  const active = data.incidents.find((incident) => incident.status === "open");
+  const hasRotation = Boolean(data.rotation?.members.length);
+  const label = active ? "ACTIVE\nINCIDENT" : hasRotation ? "ON CALL" : "ALL CLEAR";
+  const color = active ? "#F5484B" : hasRotation ? "#5B6EF5" : "#3DD68C";
+  const pulse = usePulse(Boolean(active));
 
   return (
     <View className="relative">
-      {state === "incident" && (
-        <>
-          {/* Static glow bleed behind the card for depth */}
-          <View
-            className="absolute rounded-[20px]"
-            style={{
-              top: 10,
-              left: 10,
-              right: 10,
-              bottom: -8,
-              backgroundColor: color,
-              opacity: 0.12,
-            }}
-            pointerEvents="none"
-          />
-          {/* Pulsing border ring — uses top/left/right/bottom (not CSS inset) */}
-          <Animated.View
-            className="absolute rounded-[23px] border-2"
-            style={{
-              top: -3,
-              left: -3,
-              right: -3,
-              bottom: -3,
-              borderColor: color,
-              opacity: pulse,
-            }}
-            pointerEvents="none"
-          />
-        </>
-      )}
-
+      {active && <Animated.View className="absolute -inset-1 rounded-[23px] border-2" style={{ borderColor: color, opacity: pulse }} />}
       <Card>
-        {/* §2.2 micro label — 11pt uppercase tracking */}
-        <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-text-secondary">
-          On-Call Status
-        </Text>
-
-        {/* §2.2 hero numeral — 40pt bold, severity color */}
-        <Text
-          className="mt-[14px] text-[40px] font-bold leading-[46px]"
-          style={{ color }}
-        >
-          {getStatusLabel(state)}
-        </Text>
-
+        <Text className="text-[11px] font-semibold uppercase tracking-[2px] text-text-secondary">On-Call Status</Text>
+        <Text className="mt-[14px] text-[40px] font-bold leading-[46px]" style={{ color }}>{label}</Text>
         <Text className="mt-1.5 text-sm text-text-secondary">
-          {getStatusSubtext(state)}
+          {active ? "Ack required · open incident" : hasRotation ? "Your rotation is active" : "No rotation has been configured"}
         </Text>
-
-        {/* Sub-stats */}
         <View className="mt-5 flex-row items-center border-t border-border-subtle pt-4">
-          <View className="flex-1">
-            <Text className="text-[28px] font-bold text-text-primary">
-              {openCount}
-            </Text>
-            <Text className="mt-0.5 text-xs text-text-secondary">
-              open incidents
-            </Text>
-          </View>
+          <View className="flex-1"><Text className="text-[28px] font-bold text-text-primary">{data.incidents.filter((incident) => incident.status === "open").length}</Text><Text className="mt-0.5 text-xs text-text-secondary">open incidents</Text></View>
           <View className="h-8 w-px bg-border-subtle" />
-          <View className="flex-1 pl-5">
-            <Text className="text-[28px] font-bold text-text-primary">3</Text>
-            <Text className="mt-0.5 text-xs text-text-secondary">
-              resolved this week
-            </Text>
-          </View>
+          <View className="flex-1 pl-5"><Text className="text-[28px] font-bold text-text-primary">{data.incidents.filter((incident) => incident.status === "resolved").length}</Text><Text className="mt-0.5 text-xs text-text-secondary">resolved incidents</Text></View>
         </View>
       </Card>
     </View>
   );
 }
 
-// ─── Incident Row ─────────────────────────────────────────────────────────────
-
-function IncidentRow({ incident }: { incident: Incident }) {
-  const statusLabel =
-    incident.status === "open"
-      ? "OPEN"
-      : incident.status === "acked"
-        ? "ACKED"
-        : "RESOLVED";
-
-  return (
-    <Pressable accessibilityRole="button" accessibilityLabel={`Open incident: ${incident.title}`} onPress={() => router.push({ pathname: "/(app)/incident/[id]" as never, params: { id: incident.id } })} style={({ pressed }) => ({ opacity: pressed ? 0.65 : 1 })}>
-      <View className="flex-row items-center justify-between py-3.5">
-        <View className="mr-3 flex-1">
-          <Text
-            className="text-[15px] font-semibold text-text-primary"
-            numberOfLines={1}
-          >
-            {incident.title}
-          </Text>
-          <View className="mt-1 flex-row items-center gap-1.5">
-            <Text className="text-xs text-text-secondary">
-              {incident.source}
-            </Text>
-            <Text className="text-xs text-border-subtle">·</Text>
-            <Text className="text-xs text-text-secondary">{incident.time}</Text>
-          </View>
-        </View>
-        <StatusBadge severity={incident.severity} label={statusLabel} />
-      </View>
-    </Pressable>
-  );
-}
-
-// ─── Team Member Card ─────────────────────────────────────────────────────────
-
-function TeamMemberCard({
-  name,
-  shift,
-  avatar,
-}: {
-  name: string;
-  shift: string;
-  avatar: string;
-}) {
-  return (
-    <Card className="flex-1">
-      <View className="h-10 w-10 items-center justify-center rounded-full bg-accent-primary/20">
-        <Text className="text-sm font-bold text-accent-primary">{avatar}</Text>
-      </View>
-      <Text className="mt-3 text-base font-semibold text-text-primary">
-        {name}
-      </Text>
-      <Text className="mt-0.5 text-xs text-text-secondary">{shift}</Text>
-    </Card>
-  );
-}
-
-// ─── Home Screen ──────────────────────────────────────────────────────────────
-
 export default function Home() {
   const { user } = useUser();
-  const firstName = user?.firstName ?? "there";
-  const state: OnCallState = DEMO_STATE;
-  const ctaLabel =
-    state === "incident" ? "View Active Incident" : "Claim On-Call";
+  const { getToken } = useAuth();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    apiGet("/api/me/dashboard", getToken).then((result) => setData(result as DashboardData)).catch(() => setError(true));
+  }, [getToken]);
+
+  const active = useMemo(() => data?.incidents.find((incident) => incident.status === "open"), [data]);
+  const recent = data?.incidents.slice(0, 3) ?? [];
 
   return (
     <SafeAreaView className="flex-1 bg-bg-primary">
-      <ScrollView
-        className="flex-1"
-        contentContainerClassName="px-5 pb-10"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header — §2.2: screen title 24pt bold */}
+      <ScrollView className="flex-1" contentContainerClassName="px-5 pb-10" showsVerticalScrollIndicator={false}>
         <View className="flex-row items-center justify-between pb-6 pt-5">
-          <View>
-            <Text className="text-sm text-text-secondary">Good morning,</Text>
-            <Text className="mt-0.5 text-2xl font-bold text-text-primary">
-              {firstName}
-            </Text>
-          </View>
-          <Pressable
-            accessibilityLabel="Notifications"
-            className="h-11 w-11 items-center justify-center rounded-full border border-border-subtle bg-bg-surface"
-          >
-            <Ionicons name="notifications-outline" size={20} color="#9AA1B9" />
-          </Pressable>
+          <View><Text className="text-sm text-text-secondary">Good morning,</Text><Text className="mt-0.5 text-2xl font-bold text-text-primary">{user?.firstName ?? "there"}</Text><Text className="mt-1 text-xs text-text-secondary">{data?.team?.name ?? "Your PocketPage"}</Text></View>
+          <Pressable accessibilityLabel="Notifications" className="h-11 w-11 items-center justify-center rounded-full border border-border-subtle bg-bg-surface"><Ionicons name="notifications-outline" size={20} color="#9AA1B9" /></Pressable>
         </View>
 
-        {/* On-Call Status card */}
-        <OnCallStatusCard state={state} />
-
-        {/* Primary CTA */}
-        <PrimaryButton
-          label={ctaLabel}
-          className="mt-4"
-          variant={state === "incident" ? "primary" : "secondary"}
-          leftIcon={
-            <Ionicons
-              name={state === "incident" ? "flash" : "add-circle-outline"}
-              size={18}
-              color={state === "incident" ? "#fff" : "#F5F6FA"}
-            />
-          }
-        />
-
-        {/* Recent Incidents */}
-        <SectionLabel className="mb-3 mt-8">Recent Incidents</SectionLabel>
-
-        {RECENT_INCIDENTS.length === 0 ? (
-          <View className="items-center rounded-2xl border border-dashed border-border-subtle px-5 py-10">
-            <Ionicons
-              name="checkmark-circle-outline"
-              size={32}
-              color="#3DD68C"
-            />
-            <Text className="mt-3 text-base font-semibold text-text-primary">
-              You&apos;re all caught up
-            </Text>
-            <Text className="mt-1 text-center text-sm text-text-secondary">
-              Incidents will appear here when your team receives a page.
-            </Text>
-          </View>
-        ) : (
-          <Card className="p-0 px-5">
-            {RECENT_INCIDENTS.map((incident, i) => (
-              <View key={incident.id}>
-                <IncidentRow incident={incident} />
-                {i < RECENT_INCIDENTS.length - 1 && (
-                  <View className="h-px bg-border-subtle" />
-                )}
-              </View>
-            ))}
-          </Card>
-        )}
-
-        <Pressable className="mt-3 flex-row items-center justify-end active:opacity-70" onPress={() => router.push("/(app)/incidents")}>
-          <Text className="text-sm font-semibold text-accent-primary">
-            View all
-          </Text>
-          <Ionicons name="arrow-forward" size={15} color="#5B6EF5" style={{ marginLeft: 5 }} />
-        </Pressable>
-
-        {/* Team Status */}
-        <SectionLabel className="mb-3 mt-7">Team Status</SectionLabel>
-        <View className="flex-row gap-3">
-          {TEAM_ROTATION.map((member) => (
-            <TeamMemberCard key={member.name} {...member} />
-          ))}
-        </View>
+        {error ? <View className="mt-8 items-center"><Ionicons name="cloud-offline-outline" size={36} color="#F5A623" /><Text className="mt-3 text-base font-semibold text-text-primary">Couldn&apos;t load dashboard</Text><Text className="mt-1 text-sm text-text-secondary">Check your connection and try again.</Text></View> : !data ? <View className="py-16"><Text className="text-center text-sm text-text-secondary">Loading your dashboard…</Text></View> : <>
+          <StatusCard data={data} />
+          <PrimaryButton label={active ? "View Active Incident" : "View Schedule"} className="mt-4" variant="primary" leftIcon={<Ionicons name={active ? "flash" : "calendar-outline"} size={18} color="#FFFFFF" />} onPress={() => active ? router.push({ pathname: "/(app)/incident/[id]" as never, params: { id: active.id } }) : router.push("/(app)/schedule")} />
+          <SectionLabel className="mb-3 mt-8">Recent Incidents</SectionLabel>
+          {recent.length === 0 ? <View className="items-center rounded-2xl border border-dashed border-border-subtle px-5 py-10"><Ionicons name="checkmark-circle-outline" size={32} color="#3DD68C" /><Text className="mt-3 text-base font-semibold text-text-primary">You&apos;re all caught up</Text><Text className="mt-1 text-center text-sm text-text-secondary">Incidents will appear here when your webhook receives a page.</Text></View> : <Card className="p-0 px-5">{recent.map((incident, index) => <View key={incident.id}><IncidentRow incident={incident} />{index < recent.length - 1 && <View className="h-px bg-border-subtle" />}</View>)}</Card>}
+          <Pressable className="mt-3 flex-row items-center justify-end" onPress={() => router.push("/(app)/incidents")}><Text className="text-sm font-semibold text-accent-primary">View all</Text><Ionicons name="arrow-forward" size={15} color="#5B6EF5" style={{ marginLeft: 5 }} /></Pressable>
+          <SectionLabel className="mb-3 mt-7">Team Status</SectionLabel>
+          {!data.rotation?.members.length ? <Card><Text className="text-sm text-text-secondary">No rotation members have been added yet.</Text></Card> : <View className="flex-row gap-3">{data.rotation.members.slice(0, 2).map((member) => <Card key={member.id} className="flex-1"><View className="h-10 w-10 items-center justify-center rounded-full bg-accent-primary/20"><Text className="text-sm font-bold text-accent-primary">{member.name.charAt(0)}</Text></View><Text className="mt-3 text-base font-semibold text-text-primary">{member.name}</Text><Text className="mt-0.5 text-xs text-text-secondary">{member.isCurrent ? "Current rotation" : "Upcoming"}</Text></Card>)}</View>}
+        </>}
       </ScrollView>
     </SafeAreaView>
   );

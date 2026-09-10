@@ -1,14 +1,21 @@
-import { useAuth } from "@clerk/expo";
+import { useAuth, useUser } from "@clerk/expo";
 import { Ionicons } from "@expo/vector-icons";
 import { Redirect, Tabs } from "expo-router";
+import { hasCompletedOnboarding } from "@/lib/onboarding";
+import { LoadingScreen } from "@/components/ui/LoadingScreen";
 
 export default function AppLayout() {
   const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded: userLoaded, user } = useUser();
 
-  if (!isLoaded) return null;
+  if (!isLoaded || !userLoaded) return <LoadingScreen />;
 
   if (!isSignedIn) {
     return <Redirect href="/(auth)/sign-in" />;
+  }
+
+  if (!hasCompletedOnboarding(user?.unsafeMetadata)) {
+    return <Redirect href="/(onboarding)" />;
   }
 
   return (

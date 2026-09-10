@@ -30,17 +30,11 @@ const SignIn = () => {
   const { loadingStrategy, handleSocialAuth } = useSocialAuth();
   useWarmUpBrowser();
 
-  // Two independently-timed pulses for layered depth
   const glowA = useRef(new Animated.Value(0.18)).current;
   const glowB = useRef(new Animated.Value(0.08)).current;
 
   useEffect(() => {
-    const pulse = (
-      val: Animated.Value,
-      lo: number,
-      hi: number,
-      dur: number,
-    ) =>
+    const pulse = (val: Animated.Value, lo: number, hi: number, dur: number) =>
       Animated.loop(
         Animated.sequence([
           Animated.timing(val, {
@@ -66,28 +60,39 @@ const SignIn = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-bg-primary">
-      {/*
-       * Hero area — flex-1 so it takes all space above the auth section.
-       * justify-end floats text content to the bottom of this region.
-       * Glow orbs are absolutely positioned inside so they don't push text.
-       */}
       <View className="flex-1 justify-end overflow-hidden">
-        {/* Orb 1 — large primary glow, top-left */}
         <Animated.View
           className="absolute rounded-full bg-accent-primary"
-          style={{ width: 420, height: 420, top: -180, left: -80, opacity: glowA }}
+          style={{
+            width: 420,
+            height: 420,
+            top: -180,
+            left: -80,
+            opacity: glowA,
+          }}
           pointerEvents="none"
         />
-        {/* Orb 2 — medium secondary glow, top-right */}
         <Animated.View
           className="absolute rounded-full bg-accent-primary"
-          style={{ width: 280, height: 280, top: -60, right: -100, opacity: glowB }}
+          style={{
+            width: 280,
+            height: 280,
+            top: -60,
+            right: -100,
+            opacity: glowB,
+          }}
           pointerEvents="none"
         />
         {/* Orb 3 — small accent, mid-center */}
         <Animated.View
           className="absolute rounded-full bg-accent-primary"
-          style={{ width: 160, height: 160, top: 100, left: 100, opacity: glowA }}
+          style={{
+            width: 160,
+            height: 160,
+            top: 100,
+            left: 100,
+            opacity: glowA,
+          }}
           pointerEvents="none"
         />
 
@@ -105,13 +110,11 @@ const SignIn = () => {
         </View>
       </View>
 
-      {/* Auth buttons — pinned below hero, separated by border-subtle */}
       <View className="border-t border-border-subtle px-6 pb-6 pt-7">
         <Text className="mb-[14px] text-[11px] font-semibold uppercase tracking-[1.5px] text-text-secondary">
           Continue with
         </Text>
 
-        {/* Google — primary white fill */}
         <Pressable
           accessibilityLabel="Sign in with Google"
           className={`mb-3 h-[54px] flex-row items-center justify-center rounded-[28px] bg-text-primary ${isLoading ? "opacity-60" : ""}`}
@@ -127,8 +130,6 @@ const SignIn = () => {
             Google
           </Text>
         </Pressable>
-
-        {/* GitHub — secondary surface */}
         <Pressable
           accessibilityLabel="Sign in with GitHub"
           className={`mb-3 h-[54px] flex-row items-center justify-center rounded-[28px] border border-border-subtle bg-bg-surface ${isLoading ? "opacity-60" : ""}`}
